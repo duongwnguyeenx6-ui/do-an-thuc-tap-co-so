@@ -5,11 +5,11 @@ import webbrowser
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 
-from auth_routes import auth_api
-from cover_routes import COVER_DIR, cover_api, migrate_legacy_covers
+from routes.auth_routes import auth_api
+from routes.cover_routes import COVER_DIR, cover_api, migrate_legacy_covers
 from database import BASE_DIR, initialize_schema
-from favorite_routes import favorite_api
-from story_routes import story_api
+from routes.favorite_routes import favorite_api
+from routes.story_routes import story_api
 
 
 app = Flask(__name__, static_folder=str(BASE_DIR / "public"), static_url_path="")

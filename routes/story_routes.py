@@ -11,7 +11,7 @@ from psycopg2.errors import UniqueViolation
 from psycopg2.extras import RealDictCursor
 
 from database import connect, execute, fetch_all, fetch_one
-from cover_routes import save_cover
+from .cover_routes import save_cover
 from security import current_user, login_required, roles_required, story_author_required, story_owner_required
 
 

@@ -2,14 +2,12 @@ import base64
 import mimetypes
 import re
 import secrets
-from pathlib import Path
 
 from flask import Blueprint, Response, jsonify, send_from_directory
 
-from database import execute, fetch_all, fetch_one
+from database import BASE_DIR, execute, fetch_all, fetch_one
 
 
-BASE_DIR = Path(__file__).resolve().parent
 PUBLIC_DIR = BASE_DIR / "public"
 COVER_DIR = PUBLIC_DIR / "uploads" / "covers"
 ALLOWED_IMAGES = {
