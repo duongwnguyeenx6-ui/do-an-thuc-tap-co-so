@@ -5,6 +5,7 @@ import { createComponent as createRankingViews } from './rankings.js';
 import { createComponent as createWriterViews } from './writer.js';
 import { createComponent as createReaderViews } from './reader.js';
 import { createPaymentViews } from './payments.js';
+import { syncOpeningBackground } from './opening-background.js';
 
 export function createViews(context) {
   const auth = createAuthViews(context);
@@ -60,6 +61,8 @@ export function createViews(context) {
     else if (state.screen === 'admin') root.innerHTML = admin.renderAdmin();
     else if (state.screen === 'rankings') root.innerHTML = rankings.renderRankings();
     else root.innerHTML = catalog.renderHome();
+    syncOpeningBackground(root.querySelector('.opening-webgl'));
+    state.authEntryTransition = false;
     if (state.user) root.innerHTML += payments.renderPaymentModal();
     if (['home', 'admin'].includes(state.screen) && state.user?.role === 'admin') loadAdminSummary();
     if (state.screen === 'admin' && state.user?.role === 'admin') loadAdminPayments();

@@ -60,7 +60,16 @@ export function createComponent(context) {
   }
 
   function renderOpeningScreen() {
-    return `<section class="opening-screen" aria-label="Màn hình chào mừng Sọt Truyện"><div class="opening-stars" aria-hidden="true"></div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div><button class="opening-enter" type="button" data-action="opening-login" aria-label="Vào Sọt Truyện và đăng nhập"><span>Chạm để bắt đầu</span><span aria-hidden="true">↓</span></button></section>`;
+    const stars = Array.from({ length: 88 }, (_, index) => {
+      const x = (index * 37 + 11) % 101;
+      const y = (index * 61 + 7) % 101;
+      const size = index % 13 === 0 ? 11 : index % 5 === 0 ? 8 : 4 + (index % 3);
+      const dim = index % 4 === 0 ? 0.48 : 0.2;
+      const bright = index % 4 === 0 ? 1 : 0.76;
+      const delay = -((index * 17) % 34) / 10;
+      return `<span style="--star-x:${x}%;--star-y:${y}%;--star-size:${size}px;--star-dim:${dim};--star-bright:${bright};--star-delay:${delay}s"></span>`;
+    }).join('');
+    return `<section class="opening-screen" aria-label="Màn hình chào mừng Sọt Truyện"><canvas class="opening-webgl" aria-hidden="true"></canvas><div class="opening-stars" aria-hidden="true">${stars}</div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div><button class="opening-enter" type="button" data-action="opening-login" aria-label="Vào Sọt Truyện và đăng nhập"><span>Chạm để bắt đầu</span><span aria-hidden="true">↓</span></button></section>`;
   }
 
   function renderHome() {

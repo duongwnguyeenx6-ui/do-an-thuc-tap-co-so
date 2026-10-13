@@ -41,6 +41,7 @@ import { normalizeText } from './js/utils.js';
             readerScale: Number(localStorage.getItem('coChuReader') || 1),
             authMode: null,
             authLampOn: false,
+            authEntryTransition: false,
             authNotice: '',
             resetToken: '',
             user: readStorage('nguoiDung', null),
@@ -735,14 +736,21 @@ import { normalizeText } from './js/utils.js';
         }
         break;
       }
-      case 'opening-login':
+      case 'opening-login': {
+        const openingScreen = root.querySelector('.opening-screen');
+        if (!openingScreen || openingScreen.classList.contains('is-leaving')) break;
+        openingScreen.classList.add('is-leaving');
+        const transitionDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 600;
+        await new Promise((resolve) => window.setTimeout(resolve, transitionDuration));
         authModeSwitchToken += 1;
         state.showOpening = false;
         state.authMode = 'login';
         state.authLampOn = false;
+        state.authEntryTransition = transitionDuration > 0;
         state.authNotice = '';
         render();
         break;
+      }
       case 'close-auth':
         authModeSwitchToken += 1;
         state.authMode = null; state.authLampOn = false; state.authNotice = '';
