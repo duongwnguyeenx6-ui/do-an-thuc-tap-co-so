@@ -1,0 +1,9 @@
+{
+    "name": "story-web-demo",
+    "version": "1.0.0",
+    "description": "Website truyện chữ với Flask và PostgreSQL",
+    "scripts": {
+        "start": ".\\.venv\\Scripts\\python.exe app.py",
+        "dev": ".\\.venv\\Scripts\\python.exe app.py"
+    }
+}
