@@ -186,7 +186,7 @@ import { normalizeText } from './js/utils.js';
 
   const { mainHeader, renderAccountPanel } = createLayoutViews({ state, escapeHtml, hasAuthorAccess, formatDate, money });
 
-  const { render, renderAdminSummary, renderFilteredStories, renderPendingPayments, renderRankingColumns, renderReviewsPanel } = createViews({
+  const { render, renderAuthModal, renderAdminSummary, renderFilteredStories, renderPendingPayments, renderRankingColumns, renderReviewsPanel } = createViews({
     root, state, genres, escapeHtml, money, formatDate, canEditStory, getStory,
     hasAuthorAccess, mainHeader, renderAccountPanel,
     loadAdminSummary, loadAdminPayments, loadRankings, loadStoryReviews, updateSearchResults,
@@ -888,16 +888,24 @@ import { normalizeText } from './js/utils.js';
     window.clearTimeout(authFlipBubbleTimer);
     authFlipBubbleTimer = window.setTimeout(() => modal.classList.remove('is-auth-flipping'), 2200);
     currentContent.classList.add('is-auth-transition-out');
+    const transitionDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 480;
     window.setTimeout(() => {
       if (transitionToken !== authModeSwitchToken) return;
       state.authMode = mode;
       state.authNotice = '';
-      render();
-      const nextContent = document.querySelector('.auth-modal .auth-card-content');
-      if (!nextContent || !state.authLampOn) return;
-      nextContent.classList.add('is-auth-transition-in');
-      window.setTimeout(() => nextContent.classList.remove('is-auth-transition-in'), 700);
-    }, 460);
+      const template = document.createElement('template');
+      template.innerHTML = renderAuthModal();
+      const nextCard = template.content.querySelector('.auth-card');
+      const currentCard = modal.querySelector('.auth-card');
+      const nextContent = nextCard?.querySelector('.auth-card-content');
+      if (!nextCard || !nextContent || !currentCard) throw new Error('Không thể cập nhật biểu mẫu tài khoản.');
+      currentCard.className = nextCard.className;
+      currentContent.innerHTML = nextContent.innerHTML;
+      currentContent.className = nextContent.className;
+      if (transitionDuration === 0) return;
+      currentContent.classList.add('is-auth-transition-in');
+      window.setTimeout(() => currentContent.classList.remove('is-auth-transition-in'), 500);
+    }, transitionDuration);
   }
 
   function handleClick(event) {

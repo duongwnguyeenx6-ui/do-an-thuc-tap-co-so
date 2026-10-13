@@ -74,6 +74,7 @@ export function createViews(context) {
 
   return {
     render,
+    renderAuthModal: auth.renderAuthModal,
     renderAdminSummary: catalog.renderAdminSummary,
     renderFilteredStories: catalog.renderFilteredStories,
     renderPendingPayments: admin.renderPendingPayments,

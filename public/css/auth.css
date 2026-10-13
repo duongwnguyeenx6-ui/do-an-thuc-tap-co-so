@@ -6,10 +6,15 @@
     place-items: center;
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: none;
     padding: 24px;
     background: #121417;
     color: #fff;
     font-family: "DM Sans", "Segoe UI", sans-serif;
+}
+
+.auth-modal::-webkit-scrollbar {
+    display: none;
 }
 
 .auth-modal.is-entering-from-opening {
@@ -244,7 +249,11 @@
     transform: translateY(30px) rotateY(0);
     transform-origin: center center;
     backface-visibility: hidden;
-    transition: opacity 900ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 950ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition:
+        opacity 900ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        transform 950ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        width 480ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        flex-basis 480ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .auth-card-content::-webkit-scrollbar {
@@ -299,11 +308,11 @@
     opacity: 0;
     pointer-events: none;
     transform: translateY(0) rotateY(-82deg) scale(0.96);
-    transition-duration: 450ms, 450ms;
+    transition-duration: 480ms, 480ms, 480ms, 480ms;
 }
 
 .auth-card-content.is-auth-transition-in {
-    animation: auth-mode-flip-in 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: auth-mode-flip-in 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .auth-card-content h2 {
