@@ -17,12 +17,29 @@
     display: none;
 }
 
+.auth-modal.has-opening-background {
+    background: transparent;
+}
+
 .auth-modal.is-entering-from-opening {
-    animation: auth-arrive-from-opening 780ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: auth-arrive-from-opening 1300ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .auth-modal.is-entering-from-opening .auth-lamp-scene {
-    animation: auth-scene-arrive 850ms 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: auth-scene-arrive 850ms 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-modal.is-leaving-to-opening {
+    pointer-events: none;
+}
+
+.auth-modal.is-leaving-to-opening .auth-lamp-scene {
+    animation: auth-scene-leave 560ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.auth-modal.is-leaving-to-opening .lamp-bubbles {
+    opacity: 0;
+    transition: opacity 260ms ease;
 }
 
 .auth-modal::before {
@@ -552,7 +569,7 @@
     text-underline-offset: 3px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 850px) {
     .auth-modal {
         place-items: start center;
         padding: 28px 16px;
@@ -657,24 +674,28 @@
 @keyframes auth-arrive-from-opening {
     from {
         opacity: 0;
-        filter: blur(12px);
-        transform: scale(1.035);
     }
     to {
         opacity: 1;
-        filter: blur(0);
-        transform: scale(1);
     }
 }
 
 @keyframes auth-scene-arrive {
     from {
         opacity: 0;
-        transform: translateY(24px) scale(0.97);
+        transform: translateY(42px) scale(0.96);
     }
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes auth-scene-leave {
+    to {
+        opacity: 0;
+        filter: blur(6px);
+        transform: translateY(20px) scale(0.97);
     }
 }
 
@@ -704,7 +725,8 @@
     }
 
     .auth-modal.is-entering-from-opening,
-    .auth-modal.is-entering-from-opening .auth-lamp-scene {
+    .auth-modal.is-entering-from-opening .auth-lamp-scene,
+    .auth-modal.is-leaving-to-opening .auth-lamp-scene {
         animation: none;
     }
 }

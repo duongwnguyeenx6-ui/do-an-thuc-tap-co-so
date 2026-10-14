@@ -9,7 +9,7 @@ export function createComponent(context) {
     const title = register ? 'Đăng ký' : forgot ? 'Quên mật khẩu' : reset ? 'Đặt lại mật khẩu' : 'Đăng nhập';
     const passwordField = !forgot;
     const lampOn = Boolean(state.authLampOn);
-    return `<div class="auth-modal ${lampOn ? 'is-lamp-on' : ''} ${state.authEntryTransition ? 'is-entering-from-opening' : ''}" role="dialog" aria-modal="true" aria-label="Tài khoản"><div class="lamp-bubbles" aria-hidden="true">${'<span></span>'.repeat(40)}</div><section class="auth-card auth-lamp-scene auth-card--${state.authMode} ${lampOn ? 'is-lamp-on' : ''}">
+    return `<div class="auth-modal ${lampOn ? 'is-lamp-on' : ''} ${state.showOpening ? 'has-opening-background' : ''} ${state.authEntryTransition ? 'is-entering-from-opening' : ''}" role="dialog" aria-modal="true" aria-label="Tài khoản"><div class="lamp-bubbles" aria-hidden="true">${'<span></span>'.repeat(40)}</div><section class="auth-card auth-lamp-scene auth-card--${state.authMode} ${lampOn ? 'is-lamp-on' : ''}">
       <button class="auth-close" type="button" data-action="close-auth" aria-label="Đóng">×</button>
       <div class="lamp-wrapper">
         <svg class="lamp-svg" viewBox="0 0 200 300" role="img" aria-label="Đèn bàn">

@@ -12,6 +12,53 @@ import { normalizeText } from './js/utils.js';
         let lampBubbleTimer = null;
         let authFlipBubbleTimer = null;
         let authModeSwitchToken = 0;
+        let authBrandTransitionAnimation = null;
+        let authBrandTransitionToken = 0;
+        let authClosing = false;
+
+        function waitForAnimationFinish(animation) {
+            return new Promise((resolve) => {
+                animation.addEventListener('finish', resolve, { once: true });
+                animation.addEventListener('cancel', resolve, { once: true });
+            });
+        }
+
+        async function closeAuthToOpening() {
+            if (state.authMode === null || authClosing) return;
+            authClosing = true;
+            authModeSwitchToken += 1;
+            const modal = root.querySelector('.auth-modal');
+            const openingScreen = root.querySelector('.opening-screen');
+            const openingBrand = modal?.querySelector('.opening-brand.is-auth-brand-overlay');
+            const animation = authBrandTransitionAnimation;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (modal && animation && !reduceMotion) {
+                modal.classList.add('is-leaving-to-opening');
+                modal.setAttribute('aria-hidden', 'true');
+                animation.playbackRate = 1.2;
+                animation.reverse();
+                await waitForAnimationFinish(animation);
+                animation.cancel();
+                if (authBrandTransitionAnimation === animation) authBrandTransitionAnimation = null;
+            }
+
+            state.authMode = null;
+            state.authLampOn = false;
+            state.authNotice = '';
+            if (!state.user) state.showOpening = true;
+            authClosing = false;
+            if (openingScreen && openingBrand && !state.user && state.showOpening) {
+                openingBrand.classList.remove('is-auth-brand-overlay');
+                openingScreen.classList.remove('is-auth-background');
+                openingScreen.classList.add('is-returned-from-auth');
+                openingScreen.insertBefore(openingBrand, openingScreen.querySelector('.opening-enter'));
+                modal?.remove();
+                openingScreen.querySelector('.opening-enter')?.focus();
+            } else {
+                render();
+            }
+        }
 
         function readStorage(key, fallback) {
             try {
@@ -37,7 +84,10 @@ import { normalizeText } from './js/utils.js';
             editingStory: false,
             editingChapter: null,
             accountOpen: false,
-            editingAccount: false,
+            accountPanelView: 'menu',
+            accountPanelSwitchToken: 0,
+            accountEditing: false,
+            accountEditNotice: '',
             readerScale: Number(localStorage.getItem('coChuReader') || 1),
             authMode: null,
             authLampOn: false,
@@ -47,6 +97,7 @@ import { normalizeText } from './js/utils.js';
             user: readStorage('nguoiDung', null),
             token: localStorage.getItem('token'),
             account: { user: null, purchases: [] },
+            accountLoadError: '',
             adminSummary: { totalRevenue: 0, totalSales: 0, topStories: [] },
             pendingPayments: [],
             paymentOrder: null,
@@ -188,7 +239,7 @@ import { normalizeText } from './js/utils.js';
 
   const { render, renderAuthModal, renderAdminSummary, renderFilteredStories, renderPendingPayments, renderRankingColumns, renderReviewsPanel } = createViews({
     root, state, genres, escapeHtml, money, formatDate, canEditStory, getStory,
-    hasAuthorAccess, mainHeader, renderAccountPanel,
+    hasAuthorAccess, mainHeader,
     loadAdminSummary, loadAdminPayments, loadRankings, loadStoryReviews, updateSearchResults,
   });
 
@@ -392,6 +443,7 @@ import { normalizeText } from './js/utils.js';
         state.accountOpen = false;
         state.authMode = null;
         state.authLampOn = false;
+        state.showOpening = false;
         state.authNotice = '';
         await migrateLegacyFavorites();
         await loadFavorites();
@@ -460,26 +512,6 @@ import { normalizeText } from './js/utils.js';
     }
   }
 
-  async function handleAccountSubmit(form) {
-    const button = form.querySelector('[type="submit"]');
-    button.disabled = true;
-    try {
-      const result = await api('/api/account', {
-        method: 'PUT',
-        body: JSON.stringify(Object.fromEntries(new FormData(form))),
-      });
-      state.user = result.user;
-      state.account.user = result.user;
-      state.editingAccount = false;
-      localStorage.setItem('nguoiDung', JSON.stringify(state.user));
-      render();
-    } catch (error) {
-      showFormMessage('accountMessage', error.message);
-    } finally {
-      if (button.isConnected) button.disabled = false;
-    }
-  }
-
   async function handleReviewSubmit(form) {
     const storyId = Number(form.dataset.storyId);
     const values = Object.fromEntries(new FormData(form));
@@ -504,22 +536,43 @@ import { normalizeText } from './js/utils.js';
     }
   }
 
+  async function handleAccountEditSubmit(form) {
+    const button = form.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+      const result = await api('/api/account', {
+        method: 'PUT',
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      state.account.user = result.user;
+      state.user = { ...state.user, ...result.user };
+      state.accountEditing = false;
+      state.accountEditNotice = result.message || 'Đã cập nhật thông tin cá nhân.';
+      localStorage.setItem('nguoiDung', JSON.stringify(state.user));
+      refreshAccountPanel();
+    } catch (error) {
+      showFormMessage('accountEditMessage', error.message);
+    } finally {
+      if (button.isConnected) button.disabled = false;
+    }
+  }
+
   async function handleSubmit(event) {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
-    if (!['authForm', 'storyForm', 'storyEditForm', 'chapterForm', 'accountForm', 'storyReviewForm'].includes(form.id)) return;
+    if (!['authForm', 'storyForm', 'storyEditForm', 'chapterForm', 'storyReviewForm', 'accountEditForm'].includes(form.id)) return;
     event.preventDefault();
     if (form.id === 'authForm') await handleAuthSubmit(form);
     if (form.id === 'storyForm') await handleStorySubmit(form, false);
     if (form.id === 'storyEditForm') await handleStorySubmit(form, true);
     if (form.id === 'chapterForm') await handleChapterSubmit(form);
-    if (form.id === 'accountForm') await handleAccountSubmit(form);
     if (form.id === 'storyReviewForm') {
       if (!form.reportValidity()) return;
       const confirmation = form.closest('#storyReviewsPanel')?.querySelector('[data-review-confirmation]');
       confirmation?.removeAttribute('hidden');
       confirmation?.querySelector('[data-action="cancel-review-confirmation"]')?.focus();
     }
+    if (form.id === 'accountEditForm') await handleAccountEditSubmit(form);
   }
 
   function handleReviewRatingChange(event) {
@@ -738,35 +791,83 @@ import { normalizeText } from './js/utils.js';
       }
       case 'opening-login': {
         const openingScreen = root.querySelector('.opening-screen');
-        if (!openingScreen || openingScreen.classList.contains('is-leaving')) break;
-        openingScreen.classList.add('is-leaving');
-        const transitionDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 600;
-        await new Promise((resolve) => window.setTimeout(resolve, transitionDuration));
+        if (!openingScreen || state.authMode !== null || authClosing) break;
+        const openingBrand = openingScreen.querySelector('.opening-brand');
+        const openingBrandStart = openingBrand?.getBoundingClientRect();
+        const transitionDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1300;
+        authBrandTransitionAnimation = null;
+        const transitionToken = ++authBrandTransitionToken;
         authModeSwitchToken += 1;
-        state.showOpening = false;
         state.authMode = 'login';
         state.authLampOn = false;
         state.authEntryTransition = transitionDuration > 0;
         state.authNotice = '';
-        render();
+        const authTemplate = document.createElement('template');
+        authTemplate.innerHTML = renderAuthModal();
+        const authModal = authTemplate.content.querySelector('.auth-modal');
+        if (!authModal) throw new Error('Không thể mở biểu mẫu đăng nhập.');
+        state.authEntryTransition = false;
+        openingScreen.classList.add('is-auth-background');
+        root.append(authModal);
+        if (openingBrand && openingBrandStart) {
+          openingBrand.classList.add('is-auth-brand-overlay');
+          authModal.append(openingBrand);
+          const openingBrandEnd = openingBrand.getBoundingClientRect();
+          if (transitionDuration > 0 && openingBrandEnd.width && openingBrandEnd.height) {
+            const offsetX = openingBrandStart.left - openingBrandEnd.left;
+            const offsetY = openingBrandStart.top - openingBrandEnd.top;
+            const scaleX = openingBrandStart.width / openingBrandEnd.width;
+            const scaleY = openingBrandStart.height / openingBrandEnd.height;
+            const animation = openingBrand.animate([
+              { transform: `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})` },
+              { transform: 'translate(0, 0) scale(1, 1)' },
+            ], {
+              duration: transitionDuration,
+              easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+              fill: 'both',
+            });
+            authBrandTransitionAnimation = animation;
+            await waitForAnimationFinish(animation);
+            if (transitionToken === authBrandTransitionToken && state.authMode !== null) {
+              authModal.classList.remove('is-entering-from-opening');
+            }
+          } else {
+            authModal.classList.remove('is-entering-from-opening');
+          }
+        } else {
+          authModal.classList.remove('is-entering-from-opening');
+        }
         break;
       }
       case 'close-auth':
-        authModeSwitchToken += 1;
-        state.authMode = null; state.authLampOn = false; state.authNotice = '';
-        if (!state.user) state.showOpening = true;
-        render(); break;
+        void closeAuthToOpening();
+        break;
       case 'toggle-account-panel':
-        state.accountOpen = !state.accountOpen;
-        state.editingAccount = false;
         if (state.accountOpen) {
-          try { await loadAccount(); } catch (error) { console.warn(error); }
+          closeAccountPanel();
+          break;
         }
-        render(); break;
-      case 'edit-account':
-        state.editingAccount = true; render(); break;
-      case 'cancel-account-edit':
-        state.editingAccount = false; render(); break;
+        state.accountPanelSwitchToken += 1;
+        state.accountOpen = true;
+        state.accountPanelView = 'menu';
+        state.accountEditing = false;
+        state.accountEditNotice = '';
+        state.accountLoadError = '';
+        try {
+          await loadAccount();
+        } catch (error) {
+          state.accountLoadError = error.message;
+        }
+        if (state.accountOpen) mountAccountPanel();
+        break;
+      case 'account-panel-view':
+        void switchAccountPanelView(element.dataset.view || 'menu');
+        break;
+      case 'account-edit':
+        state.accountEditing = !state.accountEditing;
+        state.accountEditNotice = '';
+        refreshAccountPanel();
+        break;
       case 'logout': await logout(); break;
       case 'open-story':
       case 'story-detail':
@@ -908,7 +1009,91 @@ import { normalizeText } from './js/utils.js';
     }, transitionDuration);
   }
 
+  function closeAccountPanel() {
+    if (!state.accountOpen) return;
+    const panel = root.querySelector('.account-panel');
+    const switchToken = ++state.accountPanelSwitchToken;
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300;
+    state.accountPanelView = 'menu';
+    state.accountOpen = false;
+    root.querySelector('.user-button')?.setAttribute('aria-expanded', 'false');
+    if (!panel || duration === 0) {
+      panel?.remove();
+      return;
+    }
+    panel.classList.add('is-closing');
+    window.setTimeout(() => {
+      if (switchToken === state.accountPanelSwitchToken && !state.accountOpen) panel.remove();
+    }, duration);
+  }
+
+  function mountAccountPanel() {
+    const userButton = root.querySelector('.user-button');
+    const template = document.createElement('template');
+    template.innerHTML = renderAccountPanel();
+    const panel = template.content.querySelector('#accountPanel');
+    if (!userButton || !panel) throw new Error('Không thể mở bảng tài khoản.');
+    userButton.setAttribute('aria-expanded', 'true');
+    userButton.insertAdjacentElement('afterend', panel);
+    window.setTimeout(() => panel.classList.remove('is-entering'), 500);
+  }
+
+  function refreshAccountPanel() {
+    const panel = root.querySelector('.account-panel');
+    if (!panel) return;
+    const template = document.createElement('template');
+    template.innerHTML = renderAccountPanel();
+    const nextPanel = template.content.querySelector('#accountPanel');
+    const nextContent = nextPanel?.querySelector('.account-panel-content');
+    const currentHeader = panel.querySelector('.account-panel-header > div');
+    const nextHeader = nextPanel?.querySelector('.account-panel-header > div');
+    const content = panel.querySelector('.account-panel-content');
+    if (!nextContent || !currentHeader || !nextHeader || !content) throw new Error('Không thể cập nhật nội dung bảng tài khoản.');
+    currentHeader.innerHTML = nextHeader.innerHTML;
+    content.innerHTML = nextContent.innerHTML;
+    content.className = nextContent.className;
+  }
+
+  async function switchAccountPanelView(view) {
+    if (!['menu', 'info', 'history'].includes(view) || !state.accountOpen || view === state.accountPanelView) return;
+    const panel = root.querySelector('.account-panel');
+    const content = panel?.querySelector('.account-panel-content');
+    if (!panel || !content) return;
+
+    const switchToken = ++state.accountPanelSwitchToken;
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 460;
+    if (duration > 0) {
+      panel.classList.remove('is-entering');
+      panel.classList.remove('is-view-transition-in');
+      panel.classList.add('is-view-transition-out');
+      await new Promise((resolve) => window.setTimeout(resolve, duration / 2));
+      if (switchToken !== state.accountPanelSwitchToken || !state.accountOpen) return;
+    }
+
+    state.accountPanelView = view;
+    state.accountEditing = false;
+    state.accountEditNotice = '';
+    const template = document.createElement('template');
+    template.innerHTML = renderAccountPanel();
+    const nextPanel = template.content.querySelector('#accountPanel');
+    const nextContent = template.content.querySelector('#accountPanelContent');
+    const currentHeader = panel.querySelector('.account-panel-header > div');
+    const nextHeader = nextPanel?.querySelector('.account-panel-header > div');
+    if (!nextContent || !currentHeader || !nextHeader) throw new Error('Không thể cập nhật nội dung bảng tài khoản.');
+    currentHeader.innerHTML = nextHeader.innerHTML;
+    content.innerHTML = nextContent.innerHTML;
+    content.className = nextContent.className;
+    if (duration === 0) return;
+    panel.classList.replace('is-view-transition-out', 'is-view-transition-in');
+    window.setTimeout(() => {
+      if (switchToken === state.accountPanelSwitchToken) panel.classList.remove('is-view-transition-in');
+    }, duration / 2);
+  }
+
   function handleClick(event) {
+    if (state.accountOpen && !event.target.closest('.account-menu')) {
+      closeAccountPanel();
+    }
     if (!event.target.closest('.auth-role-picker')) {
       document.querySelectorAll('.auth-role-picker.is-open').forEach((picker) => {
         picker.classList.remove('is-open');
@@ -928,23 +1113,30 @@ import { normalizeText } from './js/utils.js';
     const filterElement = event.target.closest('[data-filter]');
     if (filterElement && root.contains(filterElement)) updateGenreFilter(filterElement.dataset.filter);
     if (event.target.classList.contains('auth-modal')) {
-      authModeSwitchToken += 1;
-      state.authMode = null;
-      state.authLampOn = false;
-      if (!state.user) state.showOpening = true;
-      render();
+      void closeAuthToOpening();
     }
   }
 
   function handleAuthKeydown(event) {
     if (event.key !== 'Escape') return;
-    const picker = event.target.closest('.auth-role-picker.is-open');
-    if (!picker) return;
-    picker.classList.remove('is-open');
-    picker.querySelector('.auth-role-menu').hidden = true;
-    const trigger = picker.querySelector('.auth-role-trigger');
-    trigger.setAttribute('aria-expanded', 'false');
-    trigger.focus();
+    if (state.accountOpen) {
+      closeAccountPanel();
+      return;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    const picker = target?.closest('.auth-role-picker.is-open');
+    if (picker) {
+      picker.classList.remove('is-open');
+      picker.querySelector('.auth-role-menu').hidden = true;
+      const trigger = picker.querySelector('.auth-role-trigger');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.focus();
+      return;
+    }
+    if (state.authMode !== null) {
+      event.preventDefault();
+      void closeAuthToOpening();
+    }
   }
 
   function handleInput(event) {
@@ -1088,7 +1280,7 @@ import { normalizeText } from './js/utils.js';
   root.addEventListener('pointerout', handleFilterPointerOut);
   root.addEventListener('focusin', handleFilterFocusIn);
   root.addEventListener('focusout', handleFilterFocusOut);
-  root.addEventListener('keydown', handleAuthKeydown);
+  document.addEventListener('keydown', handleAuthKeydown);
   root.addEventListener('pointerdown', handleLampPointerDown);
   root.addEventListener('pointermove', handleLampPointerMove);
   root.addEventListener('pointerup', finishLampPull);

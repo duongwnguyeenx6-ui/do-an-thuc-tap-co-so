@@ -1,7 +1,7 @@
 import { normalizeText } from './utils.js';
 
 export function createComponent(context) {
-  const { state, genres, escapeHtml, money, canEditStory, hasAuthorAccess, mainHeader, renderAccountPanel, renderAuthModal } = context;
+  const { state, genres, escapeHtml, money, canEditStory, hasAuthorAccess, mainHeader, renderAuthModal } = context;
 
   function filteredStories() {
     return state.stories.filter((story) => {
@@ -69,7 +69,8 @@ export function createComponent(context) {
       const delay = -((index * 17) % 34) / 10;
       return `<span style="--star-x:${x}%;--star-y:${y}%;--star-size:${size}px;--star-dim:${dim};--star-bright:${bright};--star-delay:${delay}s"></span>`;
     }).join('');
-    return `<section class="opening-screen" aria-label="Màn hình chào mừng Sọt Truyện"><canvas class="opening-webgl" aria-hidden="true"></canvas><div class="opening-stars" aria-hidden="true">${stars}</div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div><button class="opening-enter" type="button" data-action="opening-login" aria-label="Vào Sọt Truyện và đăng nhập"><span>Chạm để bắt đầu</span><span aria-hidden="true">↓</span></button></section>`;
+    const openingClass = state.authMode && state.showOpening ? ' is-auth-background' : '';
+    return `<section class="opening-screen${openingClass}" aria-label="Màn hình chào mừng Sọt Truyện"><canvas class="opening-webgl" aria-hidden="true"></canvas><div class="opening-stars" aria-hidden="true">${stars}</div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div><button class="opening-enter" type="button" data-action="opening-login" aria-label="Vào Sọt Truyện và đăng nhập"><span>Chạm để bắt đầu</span><span aria-hidden="true">↓</span></button></section>`;
   }
 
   function renderHome() {
@@ -97,7 +98,7 @@ export function createComponent(context) {
           <button class="featured-carousel-arrow" type="button" data-action="featured-next" aria-label="Truyện đề cử tiếp theo">→</button>
         </div>` : ''}
       </div>` : '<div class="hero-feature hero-feature-empty"><span class="eyebrow">Thư viện</span><strong>Khám phá những câu chuyện đầu tiên</strong></div>';
-    return `${mainHeader('home')}${renderAccountPanel()}
+    return `${mainHeader('home')}
       <main class="page-shell home-page">
         <section class="hero container"><div class="hero-content"><span class="eyebrow">Không gian đọc truyện</span><h1>Chọn một câu chuyện, bắt đầu hành trình mới.</h1><p>Khám phá truyện mới, lưu lại những bộ truyện yêu thích và tiếp tục đọc bất cứ lúc nào.</p><div class="hero-actions"><button class="button button-primary" data-action="scroll-to" data-target="latest">Khám phá truyện</button><span class="hero-addon">${state.stories.length} câu chuyện đang chờ bạn</span></div></div>${featured}</section>
         <section class="container genre-section" id="genres"><div class="section-heading"><div><span class="eyebrow">Khám phá</span><h2>Thể loại</h2></div></div><div class="filter-row"><span class="filter-marker" aria-hidden="true"></span>${renderGenres()}</div></section>
