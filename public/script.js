@@ -105,7 +105,9 @@ import { normalizeText } from './js/utils.js';
             rankings: null,
             rankingsLoading: false,
             showOpening: true,
+            darkMode: localStorage.getItem('darkMode') === 'true',
         };
+        document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
 
         function escapeHtml(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({
@@ -235,11 +237,11 @@ import { normalizeText } from './js/utils.js';
       button.closest('.lamp-wrapper')?.querySelector('.cord-line')?.setAttribute('y2', '190');
   }
 
-  const { mainHeader, renderAccountPanel } = createLayoutViews({ state, escapeHtml, hasAuthorAccess, formatDate, money });
+  const { mainHeader, renderAccountPanel, themeToggleButton } = createLayoutViews({ state, escapeHtml, hasAuthorAccess, formatDate, money });
 
   const { render, renderAuthModal, renderAdminSummary, renderFilteredStories, renderPendingPayments, renderRankingColumns, renderReviewsPanel } = createViews({
     root, state, genres, escapeHtml, money, formatDate, canEditStory, getStory,
-    hasAuthorAccess, mainHeader,
+    hasAuthorAccess, mainHeader, themeToggleButton,
     loadAdminSummary, loadAdminPayments, loadRankings, loadStoryReviews, updateSearchResults,
   });
 
@@ -757,6 +759,13 @@ import { normalizeText } from './js/utils.js';
         switchAuthMode(mode || 'login'); break;
       case 'toggle-lamp': {
         toggleLamp(element);
+        break;
+      }
+      case 'toggle-theme': {
+        state.darkMode = !state.darkMode;
+        document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
+        localStorage.setItem('darkMode', String(state.darkMode));
+        render();
         break;
       }
       case 'toggle-role-menu': {

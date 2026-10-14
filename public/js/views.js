@@ -9,7 +9,11 @@ import { syncOpeningBackground } from './opening-background.js';
 
 export function createViews(context) {
   const auth = createAuthViews(context);
-  const sharedContext = { ...context, renderAuthModal: auth.renderAuthModal };
+  const sharedContext = {
+    ...context,
+    renderAuthModal: auth.renderAuthModal,
+    themeToggleButton: context.themeToggleButton,
+  };
   const catalog = createCatalogViews(sharedContext);
   const admin = createAdminViews({ ...sharedContext, renderAdminSummary: catalog.renderAdminSummary });
   const rankings = createRankingViews(sharedContext);

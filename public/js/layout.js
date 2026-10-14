@@ -1,6 +1,11 @@
 export function createLayoutViews(context) {
   const { state, escapeHtml, hasAuthorAccess, formatDate, money } = context;
 
+        function themeToggleButton() {
+            const darkMode = Boolean(state.darkMode);
+            return `<label class="theme-toggle switch" title="${darkMode ? 'Chế độ tối' : 'Chế độ sáng'}"><input class="circle" type="checkbox" data-action="toggle-theme" aria-label="${darkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}" aria-pressed="${darkMode}" ${darkMode ? 'checked' : ''}><svg class="svg moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.6 8.6 0 1 0 20.2 15.4Z"></path></svg><span class="svg sun" aria-hidden="true"><span class="dot"></span></span></label>`;
+        }
+
         function mainHeader(active = 'home') {
             const accountButton = state.user ?
                 `<div class="account-menu"><button class="button button-account user-button" data-action="toggle-account-panel" aria-expanded="${state.accountOpen}" aria-controls="accountPanel"><span class="user-avatar-mini">${escapeHtml((state.user.fullName || state.user.username || '?').charAt(0).toUpperCase())}</span><span class="user-button-label">${escapeHtml(state.user.fullName || state.user.username)}</span></button>${renderAccountPanel()}</div>` :
@@ -22,6 +27,7 @@ export function createLayoutViews(context) {
             <a class="${active === 'ranking' ? 'active' : ''}" href="#ranking" data-action="open-rankings">BXH</a>
           </nav>
           <div class="top-actions">
+            ${themeToggleButton()}
             <div class="search-wrap">
               <span class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" aria-label="Tìm truyện" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" placeholder="Tìm truyện, tác giả..." value="${escapeHtml(state.query)}"></span>
               <span id="searchSuggestions" class="search-suggestions" role="listbox" hidden></span>
@@ -87,5 +93,5 @@ export function createLayoutViews(context) {
       </section>`;
   }
 
-  return { mainHeader, renderAccountPanel };
+  return { mainHeader, renderAccountPanel, themeToggleButton };
 }
