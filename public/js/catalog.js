@@ -70,7 +70,7 @@ export function createComponent(context) {
       return `<span style="--star-x:${x}%;--star-y:${y}%;--star-size:${size}px;--star-dim:${dim};--star-bright:${bright};--star-delay:${delay}s"></span>`;
     }).join('');
     const openingClass = state.authMode && state.showOpening ? ' is-auth-background' : '';
-    return `<section class="opening-screen${openingClass}" aria-label="Màn hình chào mừng Sọt Truyện"><canvas class="opening-webgl" aria-hidden="true"></canvas><div class="opening-stars" aria-hidden="true">${stars}</div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div><button class="opening-enter" type="button" data-action="opening-login" aria-label="Vào Sọt Truyện và đăng nhập"><span>Chạm để bắt đầu</span><span aria-hidden="true">↓</span></button></section>`;
+    return `<section class="opening-screen${openingClass}" data-action="opening-login" role="button" tabindex="0" aria-label="Chạm để mở đăng nhập vào Sọt Truyện"><canvas class="opening-webgl" aria-hidden="true"></canvas><div class="opening-stars" aria-hidden="true">${stars}</div><div class="opening-brand"><span class="opening-spark" aria-hidden="true">✦</span><h1 class="opening-title"><span>SỌT</span><span>TRUYỆN</span></h1><p class="opening-tagline">MỞ CÁNH CỬA · BƯỚC VÀO THẾ GIỚI TRUYỆN</p></div></section>`;
   }
 
   function renderHome() {

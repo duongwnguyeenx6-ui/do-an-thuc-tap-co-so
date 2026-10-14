@@ -52,9 +52,9 @@ import { normalizeText } from './js/utils.js';
                 openingBrand.classList.remove('is-auth-brand-overlay');
                 openingScreen.classList.remove('is-auth-background');
                 openingScreen.classList.add('is-returned-from-auth');
-                openingScreen.insertBefore(openingBrand, openingScreen.querySelector('.opening-enter'));
+                openingScreen.prepend(openingBrand);
                 modal?.remove();
-                openingScreen.querySelector('.opening-enter')?.focus();
+                openingScreen.focus();
             } else {
                 render();
             }
@@ -1118,12 +1118,17 @@ import { normalizeText } from './js/utils.js';
   }
 
   function handleAuthKeydown(event) {
+    const target = event.target instanceof Element ? event.target : null;
+    if ((event.key === 'Enter' || event.key === ' ') && target?.matches('.opening-screen')) {
+      event.preventDefault();
+      target.click();
+      return;
+    }
     if (event.key !== 'Escape') return;
     if (state.accountOpen) {
       closeAccountPanel();
       return;
     }
-    const target = event.target instanceof Element ? event.target : null;
     const picker = target?.closest('.auth-role-picker.is-open');
     if (picker) {
       picker.classList.remove('is-open');
