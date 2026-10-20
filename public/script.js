@@ -428,28 +428,35 @@ import { normalizeText } from './js/utils.js';
     };
     const [url, payload] = endpoints[mode];
     const button = form.querySelector('[type="submit"]');
+    let authenticated = false;
     button.disabled = true;
     try {
       const result = await api(url, { method: 'POST', body: JSON.stringify(payload) });
-      if (mode === 'login') {
-        setUser(result.user, result.token);
-        state.screen = 'home';
-        state.storyId = null;
-        state.chapterIndex = 0;
-        state.genre = 'Tất cả';
-        state.fullOnly = false;
-        state.favoritesOnly = false;
-        state.query = '';
-        state.editingStory = false;
-        state.editingChapter = null;
-        state.accountOpen = false;
-        state.authMode = null;
-        state.authLampOn = false;
-        state.showOpening = false;
-        state.authNotice = '';
-        await migrateLegacyFavorites();
-        await loadFavorites();
-        await loadStories();
+      authenticated = mode === 'login';
+      if (mode === 'login' || mode === 'register') {
+        if (mode === 'register') {
+          switchAuthMode('login', 'Đăng ký thành công. Bạn có thể đăng nhập.');
+        } else {
+          setUser(result.user, result.token);
+          state.screen = 'home';
+          state.storyId = null;
+          state.chapterIndex = 0;
+          state.genre = 'Tất cả';
+          state.fullOnly = false;
+          state.favoritesOnly = false;
+          state.query = '';
+          state.editingStory = false;
+          state.editingChapter = null;
+          state.accountOpen = false;
+          state.authMode = null;
+          state.authLampOn = false;
+          state.showOpening = false;
+          state.authNotice = '';
+          render();
+          await migrateLegacyFavorites();
+          await loadFavorites();
+          await loadStories();
+        }
       } else if (mode === 'forgot') {
         state.resetToken = result.resetToken || '';
         state.authMode = 'reset';
@@ -457,11 +464,19 @@ import { normalizeText } from './js/utils.js';
         render();
       } else {
         state.authMode = 'login';
-        state.authNotice = mode === 'register' ? 'Đăng ký thành công. Bạn có thể đăng nhập.' : result.message;
+        state.authNotice = result.message;
         render();
       }
     } catch (error) {
-      showFormMessage('authMessage', error.message);
+      if (authenticated && state.authMode === null) {
+        console.error('Đăng nhập thành công nhưng không thể tải dữ liệu ban đầu:', error);
+        const storyGrid = document.getElementById('storyGrid');
+        if (storyGrid) {
+          storyGrid.innerHTML = `<p class="empty-chapters">Đăng nhập thành công nhưng không thể tải dữ liệu. ${escapeHtml(error.message)}</p>`;
+        }
+      } else {
+        showFormMessage('authMessage', error.message);
+      }
     } finally {
       if (button.isConnected) button.disabled = false;
     }
@@ -983,12 +998,12 @@ import { normalizeText } from './js/utils.js';
     }
   }
 
-  function switchAuthMode(mode) {
+  function switchAuthMode(mode, notice = '') {
     const modal = document.querySelector('.auth-modal');
     const currentContent = modal?.querySelector('.auth-card-content');
     if (!modal || !currentContent || !state.authLampOn || mode === state.authMode) {
       state.authMode = mode;
-      state.authNotice = '';
+      state.authNotice = notice;
       render();
       return;
     }
@@ -1002,7 +1017,7 @@ import { normalizeText } from './js/utils.js';
     window.setTimeout(() => {
       if (transitionToken !== authModeSwitchToken) return;
       state.authMode = mode;
-      state.authNotice = '';
+      state.authNotice = notice;
       const template = document.createElement('template');
       template.innerHTML = renderAuthModal();
       const nextCard = template.content.querySelector('.auth-card');
