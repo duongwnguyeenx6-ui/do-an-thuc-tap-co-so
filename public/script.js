@@ -780,7 +780,16 @@ import { normalizeText } from './js/utils.js';
         state.darkMode = !state.darkMode;
         document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
         localStorage.setItem('darkMode', String(state.darkMode));
-        render();
+        // Cap nhat truc tiep tren DOM - khong re-render de animation CSS chay duoc
+        document.querySelectorAll('.theme-switch').forEach((label) => {
+          const checkbox = label.querySelector('.theme-switch__checkbox');
+          if (checkbox) {
+            checkbox.checked = state.darkMode;
+            checkbox.setAttribute('aria-pressed', String(state.darkMode));
+            checkbox.setAttribute('aria-label', state.darkMode ? 'Chuy\u1ec3n sang ch\u1ebf \u0111\u1ed9 s\u00e1ng' : 'Chuy\u1ec3n sang ch\u1ebf \u0111\u1ed9 t\u1ed1i');
+          }
+          label.title = state.darkMode ? 'Ch\u1ebf \u0111\u1ed9 t\u1ed1i' : 'Ch\u1ebf \u0111\u1ed9 s\u00e1ng';
+        });
         break;
       }
       case 'toggle-role-menu': {
