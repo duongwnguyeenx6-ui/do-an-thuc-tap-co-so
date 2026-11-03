@@ -530,7 +530,11 @@ def sepay_webhook():
         return jsonify(success=True, message="Transaction ignored.")
 
     account_number = payment_configuration()["account_number"]
-    if account_number and str(data.get("accountNumber") or "").strip() != account_number:
+    received_account_numbers = {
+        str(data.get(field) or "").strip()
+        for field in ("accountNumber", "subAccount")
+    }
+    if account_number and account_number not in received_account_numbers:
         return jsonify(success=True, message="Transaction account does not match.")
 
     transfer_text = " ".join(str(data.get(field) or "") for field in ("content", "description", "code"))
