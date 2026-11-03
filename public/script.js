@@ -15,6 +15,12 @@ import { normalizeText } from './js/utils.js';
         let authBrandTransitionAnimation = null;
         let authBrandTransitionToken = 0;
         let authClosing = false;
+        let speechChunks = [];
+        let speechChunkIndex = 0;
+        let speechPlaybackToken = 0;
+        let speechPlaybackStatus = 'idle';
+        let speechVoice = null;
+        let readerProgressTimer = null;
 
         function waitForAnimationFinish(animation) {
             return new Promise((resolve) => {
@@ -89,6 +95,7 @@ import { normalizeText } from './js/utils.js';
             accountEditing: false,
             accountEditNotice: '',
             readerScale: Number(localStorage.getItem('coChuReader') || 1),
+            readingProgress: {},
             authMode: null,
             authLampOn: false,
             authEntryTransition: false,
@@ -108,6 +115,12 @@ import { normalizeText } from './js/utils.js';
             darkMode: localStorage.getItem('darkMode') === 'true',
         };
         document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
+
+        function readingProgressStorageKey() {
+            return `tienDoDocTruyen:${state.user?.id || 'guest'}`;
+        }
+
+        state.readingProgress = readStorage(readingProgressStorageKey(), {});
 
         function escapeHtml(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({
@@ -141,6 +154,194 @@ import { normalizeText } from './js/utils.js';
             return state.stories.find((story) => Number(story.maTruyen) === Number(id)) || null;
         }
 
+        function getReadingProgress(storyId, chapterCount) {
+            const progress = state.readingProgress[String(storyId)];
+            if (!progress || !Number.isInteger(Number(progress.chapterIndex)) || chapterCount < 1) return null;
+            const chapterIndex = Math.min(Math.max(0, Number(progress.chapterIndex)), chapterCount - 1);
+            const storedResumeIndex = Number(progress.resumeChapterIndex ?? chapterIndex);
+            const resumeChapterIndex = Number.isInteger(storedResumeIndex)
+                ? Math.min(Math.max(0, storedResumeIndex), chapterCount - 1)
+                : chapterIndex;
+            const storedLineNumber = Number(progress.lineNumber);
+            const storedTotalLines = Number(progress.totalLines);
+            return {
+                chapterIndex,
+                chaptersRead: chapterIndex + 1,
+                percent: Math.round(((chapterIndex + 1) / chapterCount) * 100),
+                resumeChapterIndex,
+                lineNumber: Number.isInteger(storedLineNumber) && storedLineNumber > 0 ? storedLineNumber : 0,
+                totalLines: Number.isInteger(storedTotalLines) && storedTotalLines > 0 ? storedTotalLines : 0,
+                updatedAt: progress.updatedAt || null,
+            };
+        }
+
+        function saveReadingProgress(storyId, chapterIndex, position = {}) {
+            const storyKey = String(storyId);
+            const chapterCount = getStory(storyId)?.danhSachChuong?.length || 0;
+            if (!Number.isInteger(chapterIndex) || chapterIndex < 0 || chapterIndex >= chapterCount) return;
+            const previousIndex = Math.min(Number(state.readingProgress[storyKey]?.chapterIndex ?? -1), chapterCount - 1);
+            state.readingProgress[storyKey] = {
+                ...state.readingProgress[storyKey],
+                chapterIndex: Math.max(previousIndex, chapterIndex),
+                resumeChapterIndex: chapterIndex,
+                ...position,
+                updatedAt: new Date().toISOString(),
+            };
+            try {
+                localStorage.setItem(readingProgressStorageKey(), JSON.stringify(state.readingProgress));
+            } catch (error) {
+                console.warn('Không lưu được tiến độ đọc trên trình duyệt:', error);
+            }
+        }
+
+        function getReaderLines(article) {
+            const lineTops = new Set();
+            article.querySelectorAll('p').forEach((paragraph) => {
+                const range = document.createRange();
+                range.selectNodeContents(paragraph);
+                for (const rect of range.getClientRects()) {
+                    if (rect.height > 0) lineTops.add(Math.round(rect.top + window.scrollY));
+                }
+            });
+            return [...lineTops].sort((a, b) => a - b);
+        }
+
+        function saveCurrentReaderPosition() {
+            if (state.screen !== 'reader') return;
+            const article = root.querySelector('.reader-body');
+            if (!article) return;
+            const lines = getReaderLines(article);
+            if (!lines.length) return;
+            const targetY = window.scrollY + window.innerHeight * 0.35;
+            let lineIndex = lines.findIndex((top) => top >= targetY);
+            if (lineIndex < 0) lineIndex = lines.length - 1;
+            const scrollRatio = lines.length > 1
+                ? (lines[lineIndex] - lines[0]) / (lines[lines.length - 1] - lines[0])
+                : 0;
+            const lineLabel = root.querySelector('[data-reader-line-label]');
+            if (lineLabel) lineLabel.textContent = `Đang đọc dòng ${lineIndex + 1}/${lines.length}`;
+            saveReadingProgress(state.storyId, state.chapterIndex, {
+                lineNumber: lineIndex + 1,
+                totalLines: lines.length,
+                scrollRatio,
+            });
+        }
+
+        function scheduleReaderProgressSave() {
+            if (state.screen !== 'reader') return;
+            window.clearTimeout(readerProgressTimer);
+            readerProgressTimer = window.setTimeout(saveCurrentReaderPosition, 350);
+        }
+
+        function restoreReaderPosition(progress) {
+            const article = root.querySelector('.reader-body');
+            if (!article || !progress?.lineNumber) {
+                window.scrollTo(0, 0);
+                return;
+            }
+            const lines = getReaderLines(article);
+            if (!lines.length) return;
+            const ratio = Number(progress.scrollRatio);
+            const lineIndex = Number.isFinite(ratio)
+                ? Math.min(lines.length - 1, Math.max(0, Math.round(ratio * (lines.length - 1))))
+                : Math.min(lines.length - 1, progress.lineNumber - 1);
+            window.scrollTo(0, Math.max(0, lines[lineIndex] - window.innerHeight * 0.35));
+            scheduleReaderProgressSave();
+        }
+
+        function updateSpeechControls(message) {
+            const controls = root.querySelector('.reader-speech-controls');
+            if (!controls) return;
+            const status = controls.querySelector('[data-speech-status]');
+            const play = controls.querySelector('[data-action="speech-play"]');
+            const pause = controls.querySelector('[data-action="speech-pause"]');
+            const resume = controls.querySelector('[data-action="speech-resume"]');
+            const stop = controls.querySelector('[data-action="speech-stop"]');
+            if (status) status.textContent = message;
+            if (play) play.hidden = speechPlaybackStatus === 'speaking' || speechPlaybackStatus === 'paused';
+            if (pause) pause.hidden = speechPlaybackStatus !== 'speaking';
+            if (resume) resume.hidden = speechPlaybackStatus !== 'paused';
+            if (stop) stop.hidden = !['speaking', 'paused'].includes(speechPlaybackStatus);
+        }
+
+        function splitSpeechText(text, maxLength = 220) {
+            const sentences = String(text || '').match(/[^.!?。！？\n]+[.!?。！？]?/g) || [];
+            const chunks = [];
+            let current = '';
+            for (const sentence of sentences) {
+                for (const word of sentence.trim().split(/\s+/)) {
+                    if (!word) continue;
+                    if (current && `${current} ${word}`.length > maxLength) {
+                        chunks.push(current);
+                        current = '';
+                    }
+                    current = current ? `${current} ${word}` : word;
+                }
+                if (/[.!?。！？]$/.test(sentence.trim()) && current) {
+                    chunks.push(current);
+                    current = '';
+                }
+            }
+            if (current) chunks.push(current);
+            return chunks;
+        }
+
+        function speakNextChunk(token) {
+            if (token !== speechPlaybackToken || speechPlaybackStatus !== 'speaking') return;
+            if (speechChunkIndex >= speechChunks.length) {
+                speechPlaybackStatus = 'completed';
+                updateSpeechControls('Đã đọc xong chương.');
+                return;
+            }
+            const utterance = new window.SpeechSynthesisUtterance(speechChunks[speechChunkIndex]);
+            utterance.lang = 'vi-VN';
+            if (speechVoice) utterance.voice = speechVoice;
+            utterance.onend = () => {
+                if (token !== speechPlaybackToken) return;
+                speechChunkIndex += 1;
+                speakNextChunk(token);
+            };
+            utterance.onerror = (event) => {
+                if (token !== speechPlaybackToken || event.error === 'canceled' || event.error === 'interrupted') return;
+                speechPlaybackStatus = 'error';
+                updateSpeechControls('Không phát được giọng đọc. Hãy thử lại hoặc kiểm tra giọng đọc của trình duyệt.');
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function startSpeechPlayback() {
+            if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+                updateSpeechControls('Trình duyệt này chưa hỗ trợ đọc thành tiếng.');
+                return;
+            }
+            const chapter = getStory()?.danhSachChuong?.[state.chapterIndex];
+            speechChunks = splitSpeechText(chapter?.noiDung);
+            if (!speechChunks.length) {
+                updateSpeechControls('Chương này chưa có nội dung để đọc.');
+                return;
+            }
+            window.speechSynthesis.cancel();
+            speechPlaybackToken += 1;
+            speechChunkIndex = 0;
+            speechPlaybackStatus = 'speaking';
+            speechVoice = window.speechSynthesis.getVoices()
+                .find((voice) => voice.lang.toLowerCase().startsWith('vi')) || null;
+            updateSpeechControls(speechVoice
+                ? 'Đang đọc chương...'
+                : 'Chưa tìm thấy giọng tiếng Việt; đang dùng giọng mặc định của trình duyệt.');
+            speakNextChunk(speechPlaybackToken);
+        }
+
+        function stopSpeechPlayback() {
+            speechPlaybackToken += 1;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            speechChunks = [];
+            speechChunkIndex = 0;
+            speechVoice = null;
+            speechPlaybackStatus = 'idle';
+            updateSpeechControls('Bạn có thể nghe nội dung chương này.');
+        }
+
         function authHeaders(extra = {}) {
             return {
                 ...extra,
@@ -164,14 +365,17 @@ import { normalizeText } from './js/utils.js';
         function setUser(user, token) {
             state.user = user;
             state.token = token;
+            state.readingProgress = readStorage(readingProgressStorageKey(), {});
             localStorage.setItem('nguoiDung', JSON.stringify(user));
             localStorage.setItem('token', token);
         }
 
         function clearUser() {
             stopPaymentPolling();
+            stopSpeechPlayback();
             state.user = null;
             state.token = null;
+            state.readingProgress = readStorage(readingProgressStorageKey(), {});
             state.favorites = [];
             state.screen = 'home';
             state.storyId = null;
@@ -241,7 +445,8 @@ import { normalizeText } from './js/utils.js';
 
   const { render, renderAuthModal, renderAdminSummary, renderFilteredStories, renderPendingPayments, renderRankingColumns, renderReviewsPanel } = createViews({
     root, state, genres, escapeHtml, money, formatDate, canEditStory, getStory,
-    hasAuthorAccess, mainHeader, themeToggleButton,
+    hasAuthorAccess, getReadingProgress, mainHeader, themeToggleButton,
+    speechSupported: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
     loadAdminSummary, loadAdminPayments, loadRankings, loadStoryReviews, updateSearchResults,
   });
 
@@ -937,9 +1142,23 @@ import { normalizeText } from './js/utils.js';
         break;
       }
       case 'read-story':
-        state.storyId = Number(id); state.chapterIndex = Number(element.dataset.chapter || 0); state.screen = 'reader';
+        stopSpeechPlayback();
+        state.storyId = Number(id);
+        state.chapterIndex = Number(element.dataset.chapter || 0);
+        state.screen = 'reader';
+        const savedProgress = element.dataset.resumeProgress === 'true'
+          ? state.readingProgress[String(state.storyId)]
+          : null;
+        const resumeProgress = Number(savedProgress?.resumeChapterIndex) === state.chapterIndex
+          ? savedProgress
+          : null;
+        if (!resumeProgress) {
+          saveReadingProgress(state.storyId, state.chapterIndex, { lineNumber: 0, totalLines: 0, scrollRatio: 0 });
+        }
         void recordStoryRead(state.storyId, state.chapterIndex + 1);
-        render(); break;
+        render();
+        window.requestAnimationFrame(() => restoreReaderPosition(resumeProgress));
+        break;
       case 'open-rankings':
         state.screen = 'rankings'; render(); break;
       case 'refresh-rankings':
@@ -987,6 +1206,20 @@ import { normalizeText } from './js/utils.js';
         state.readerScale = Math.max(0.85, Math.min(1.5, state.readerScale + (action === 'reader-font-up' ? 0.1 : -0.1)));
         localStorage.setItem('coChuReader', String(state.readerScale));
         document.querySelector('.reader-body')?.style.setProperty('--reader-scale', state.readerScale); break;
+      case 'speech-play':
+        startSpeechPlayback(); break;
+      case 'speech-pause':
+        window.speechSynthesis.pause();
+        speechPlaybackStatus = 'paused';
+        updateSpeechControls('Đã tạm dừng.');
+        break;
+      case 'speech-resume':
+        window.speechSynthesis.resume();
+        speechPlaybackStatus = 'speaking';
+        updateSpeechControls('Đang đọc chương...');
+        break;
+      case 'speech-stop':
+        stopSpeechPlayback(); break;
       case 'scroll-to':
         if (!document.getElementById(target) && state.screen !== 'home') {
           state.screen = 'home';
@@ -1326,5 +1559,10 @@ import { normalizeText } from './js/utils.js';
   root.addEventListener('input', handleInput);
   root.addEventListener('change', handleReviewRatingChange);
   root.addEventListener('submit', (event) => { void handleSubmit(event); });
+  window.addEventListener('scroll', scheduleReaderProgressSave, { passive: true });
+  window.addEventListener('beforeunload', () => {
+    saveCurrentReaderPosition();
+    stopSpeechPlayback();
+  });
   start();
 })();

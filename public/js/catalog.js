@@ -1,7 +1,7 @@
 import { normalizeText } from './utils.js';
 
 export function createComponent(context) {
-  const { state, genres, escapeHtml, money, canEditStory, hasAuthorAccess, mainHeader, renderAuthModal, themeToggleButton } = context;
+  const { state, genres, escapeHtml, money, canEditStory, hasAuthorAccess, getReadingProgress, mainHeader, renderAuthModal, themeToggleButton } = context;
 
   function filteredStories() {
     return state.stories.filter((story) => {
@@ -21,15 +21,19 @@ export function createComponent(context) {
       ? `<img src="${escapeHtml(story.coverImage)}" alt="Bìa ${escapeHtml(story.tieuDe)}" loading="lazy">`
       : `<span>${escapeHtml(story.tieuDe)}</span>`;
     const readable = Number(story.gia || 0) === 0 || story.canRead;
+    const readingProgress = readable ? getReadingProgress(story.maTruyen, story.danhSachChuong?.length || 0) : null;
     const readButton = Number(story.gia || 0) > 0 && !readable
       ? `<button class="button button-secondary story-buy-button" data-action="${state.user ? 'purchase-story' : 'open-auth'}" data-id="${story.maTruyen}" ${state.user ? '' : 'data-mode="login"'}>Mua ${money(story.gia)}đ</button>`
-      : `<button class="button button-primary story-buy-button" data-action="story-detail" data-id="${story.maTruyen}">Đọc truyện</button>`;
+      : readingProgress
+        ? `<button class="button button-primary story-buy-button" data-action="read-story" data-resume-progress="true" data-id="${story.maTruyen}" data-chapter="${readingProgress.resumeChapterIndex}">Đọc tiếp</button>`
+        : `<button class="button button-primary story-buy-button" data-action="story-detail" data-id="${story.maTruyen}">Đọc truyện</button>`;
     return `
       <article class="story-card" data-id="${story.maTruyen}" data-action="open-story" data-story-search="${escapeHtml(normalizeText(`${story.tieuDe} ${story.tacGia} ${story.theLoai}`))}">
         <div class="story-cover">${cover}<button class="favorite-button ${favorite ? 'is-favorite' : ''}" data-action="toggle-favorite" data-id="${story.maTruyen}" aria-label="${favorite ? 'Bỏ lưu truyện' : 'Lưu truyện'}">${favorite ? '♥' : '♡'}</button></div>
         <div class="story-body"><div class="story-meta"><span class="tag">${escapeHtml(story.theLoai)}</span><span class="story-status">${escapeHtml(story.trangThai)}</span></div>
           <h3>${escapeHtml(story.tieuDe)}</h3>
           <p class="story-author">${escapeHtml(story.tacGia)}</p><p class="story-desc">${escapeHtml(story.moTa || '')}</p>
+          ${readingProgress ? `<div class="story-reading-progress"><div class="story-reading-progress-label"><span>Đã đọc ${readingProgress.chaptersRead}/${story.danhSachChuong.length} chương</span><strong>${readingProgress.percent}%</strong></div>${readingProgress.lineNumber ? `<small class="story-reading-location">Đọc tiếp từ chương ${readingProgress.resumeChapterIndex + 1}, dòng ${readingProgress.lineNumber}${readingProgress.totalLines ? `/${readingProgress.totalLines}` : ''}</small>` : ''}<div class="reading-progress-track" role="progressbar" aria-label="Tiến độ đọc ${escapeHtml(story.tieuDe)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${readingProgress.percent}"><span style="width:${readingProgress.percent}%"></span></div></div>` : ''}
           <div class="story-footer"><span>${Number(story.gia || 0) > 0 ? `${money(story.gia)}đ` : 'Miễn phí'}</span>${readButton}</div>
           ${canEdit || canDelete ? `<div class="story-owner-actions">${canEdit ? `<button class="button button-secondary" data-action="open-writer" data-id="${story.maTruyen}">Sửa truyện</button>` : ''}${canDelete ? `<button class="button button-danger" data-action="delete-story" data-id="${story.maTruyen}">Xóa truyện</button>` : ''}</div>` : ''}
         </div>
@@ -143,6 +147,36 @@ export function createComponent(context) {
       : 0;
     state.featuredIndex = featuredIndex;
     const adminPanel = state.user?.role === 'admin' ? '<div id="adminStatsContainer"></div>' : '';
+    const readingStories = state.stories
+      .filter((story) => {
+        const readable = Number(story.gia || 0) === 0 || story.canRead;
+        return readable && getReadingProgress(story.maTruyen, story.danhSachChuong?.length || 0);
+      })
+      .map((story) => ({ story, progress: getReadingProgress(story.maTruyen, story.danhSachChuong?.length || 0) }))
+      .sort((a, b) => new Date(b.progress.updatedAt || 0) - new Date(a.progress.updatedAt || 0))
+      .slice(0, 4);
+    const readingShelf = readingStories.length ? `
+      <section class="container continue-reading-section" aria-labelledby="continueReadingHeading">
+        <div class="continue-reading-heading"><div><span class="eyebrow">Dành riêng cho bạn</span><h2 id="continueReadingHeading">Đọc tiếp hành trình</h2><p>Những câu chuyện bạn đang theo dõi</p></div><span class="continue-reading-count">${readingStories.length} truyện</span></div>
+        <div class="continue-reading-grid">${readingStories.map(({ story, progress }) => {
+          const chapter = story.danhSachChuong?.[progress.resumeChapterIndex];
+          const cover = story.coverImage
+            ? `<img src="${escapeHtml(story.coverImage)}" alt="" loading="lazy">`
+            : `<span aria-hidden="true">${escapeHtml(story.tieuDe.slice(0, 1))}</span>`;
+          return `<article class="continue-reading-card"><div class="continue-reading-cover">${cover}</div><div class="continue-reading-info"><span class="continue-reading-genre">${escapeHtml(story.theLoai)}</span><h3>${escapeHtml(story.tieuDe)}</h3><p>${chapter ? `Chương ${progress.resumeChapterIndex + 1}: ${escapeHtml(chapter.tieuDe)}` : `Đã đọc ${progress.chaptersRead}/${story.danhSachChuong.length} chương`}</p>${progress.lineNumber ? `<small>Dòng ${progress.lineNumber}${progress.totalLines ? `/${progress.totalLines}` : ''}</small>` : ''}<div class="reading-progress-track" role="progressbar" aria-label="Tiến độ đọc ${escapeHtml(story.tieuDe)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.percent}"><span style="width:${progress.percent}%"></span></div></div><button class="button button-primary continue-reading-button" data-action="read-story" data-resume-progress="true" data-id="${story.maTruyen}" data-chapter="${progress.resumeChapterIndex}">Đọc tiếp <span aria-hidden="true">→</span></button></article>`;
+        }).join('')}</div>
+      </section>` : '';
+    const genreCount = new Set(state.stories.map((story) => story.theLoai).filter(Boolean)).size;
+    const chapterCount = state.stories.reduce((count, story) => count + (story.danhSachChuong?.length || 0), 0);
+    const libraryStats = `
+      <section class="container home-library-stats" aria-label="Thư viện Sọt Truyện">
+        <div class="home-library-stat"><span class="home-library-stat-icon" aria-hidden="true">✦</span><span><strong>${state.stories.length}</strong><small>câu chuyện</small></span></div>
+        <span class="home-library-divider" aria-hidden="true"></span>
+        <div class="home-library-stat"><span class="home-library-stat-icon" aria-hidden="true">⌘</span><span><strong>${genreCount}</strong><small>thể loại</small></span></div>
+        <span class="home-library-divider" aria-hidden="true"></span>
+        <div class="home-library-stat"><span class="home-library-stat-icon" aria-hidden="true">▤</span><span><strong>${chapterCount}</strong><small>chương truyện</small></span></div>
+        <span class="home-library-note">Một góc nhỏ dành cho những câu chuyện lớn.</span>
+      </section>`;
     const featured = featuredStories.length ? `
       <div class="featured-carousel" data-active-index="${featuredIndex}" aria-label="Truyện đề cử hôm nay" aria-live="off">
         <div class="featured-carousel-track" style="transform: translate3d(-${featuredIndex * 100}%, 0, 0)">
@@ -161,6 +195,7 @@ export function createComponent(context) {
     return `${mainHeader('home')}
       <main class="page-shell home-page">
         <section class="hero container"><div class="hero-content"><span class="eyebrow">Không gian đọc truyện</span><h1>Chọn một câu chuyện, bắt đầu hành trình mới.</h1><p>Khám phá truyện mới, lưu lại những bộ truyện yêu thích và tiếp tục đọc bất cứ lúc nào.</p><div class="hero-actions"><button class="button button-primary" data-action="scroll-to" data-target="latest">Khám phá truyện</button><span class="hero-addon">${state.stories.length} câu chuyện đang chờ bạn</span></div></div>${featured}</section>
+        ${libraryStats}${readingShelf}
         <section class="container genre-section" id="genres"><div class="section-heading"><div><span class="eyebrow">Khám phá</span><h2>Thể loại</h2></div></div><div class="filter-row"><span class="filter-marker" aria-hidden="true"></span>${renderGenres()}</div></section>
         <section class="container story-section" id="latest"><div class="section-heading"><div><span class="eyebrow">Thư viện</span><h2>${state.favoritesOnly ? 'Truyện đã lưu' : state.fullOnly ? 'Truyện đã hoàn thành' : 'Truyện mới cập nhật'}</h2></div><div class="section-actions"><span class="filter-marker" aria-hidden="true"></span><button class="filter-pill ${!state.favoritesOnly ? 'active' : ''}" data-action="show-all-stories">Tất cả truyện</button><button class="filter-pill ${state.favoritesOnly ? 'active' : ''}" data-action="show-favorites">Đã lưu (${state.favorites.length})</button></div></div>
           <div class="story-grid" id="storyGrid">${renderFilteredStories()}</div><p class="search-empty" hidden>Không tìm thấy truyện phù hợp.</p>
