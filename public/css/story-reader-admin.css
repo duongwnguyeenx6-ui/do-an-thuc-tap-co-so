@@ -558,6 +558,89 @@
     margin: 0 0 20px;
 }
 
+.reading-progress-panel,
+.reader-progress,
+.reader-speech-controls {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--panel-soft);
+}
+
+.reading-progress-panel {
+    margin: 18px 0;
+}
+
+.reading-progress-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text);
+}
+
+.reading-progress-heading span,
+.reading-location {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.reading-location {
+    margin: 0;
+}
+
+.chapter-row.is-read .chapter-item {
+    border-color: var(--success);
+}
+
+.chapter-item-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.chapter-progress-status {
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.reader-progress {
+    margin: 18px 0;
+}
+
+.reader-speech-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    margin: 18px 0;
+}
+
+.reader-speech-controls > div:first-child {
+    display: grid;
+    gap: 4px;
+}
+
+.reader-speech-controls > div:first-child span,
+.reader-speech-unavailable {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.reader-speech-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.reader-speech-actions [hidden] {
+    display: none;
+}
+
+.reader-speech-unavailable {
+    margin: 18px 0;
+}
+
 .chapter-navigation {
     justify-content: space-between;
     margin-top: 28px;
@@ -763,6 +846,12 @@
     }
     .section-head h2 {
         font-size: 1.45rem;
+    }
+    .reader-speech-controls {
+        grid-template-columns: 1fr;
+    }
+    .reader-speech-actions {
+        flex-direction: column;
     }
 }
 
