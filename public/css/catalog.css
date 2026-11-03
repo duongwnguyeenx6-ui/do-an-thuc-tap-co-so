@@ -141,25 +141,24 @@
 }
 
 .ranking-intro {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
-    gap: 8px 20px;
+    justify-content: space-between;
+    gap: 20px;
     padding: 26px 30px;
     border: 1px solid var(--line);
     border-left: 4px solid var(--success);
-    border-radius: 10px;
+    border-radius: 16px;
     background: linear-gradient(110deg, #e8f6ef 0%, #f5f8f0 68%, #fff3e4 100%);
 }
 
-.ranking-intro .eyebrow,
-.ranking-intro h1,
-.ranking-intro p {
-    grid-column: 1;
+.ranking-intro .eyebrow {
+    display: block;
+    margin-bottom: 4px;
 }
 
 .ranking-intro h1 {
-    margin: 4px 0 0;
+    margin: 4px 0 6px;
     font-family: "Literata", Georgia, serif;
     font-size: 2rem;
 }
@@ -170,8 +169,7 @@
 }
 
 .ranking-intro .button {
-    grid-column: 2;
-    grid-row: 1 / 4;
+    flex-shrink: 0;
 }
 
 .ranking-columns {
@@ -1414,5 +1412,986 @@
     .home-page .story-card,
     .home-page .favorite-button {
         transition: none;
+    }
+}
+
+
+/* =====================================================
+   ADMIN PAGE — Thiết kế thẻ riêng biệt, hiện đại
+   ===================================================== */
+
+.admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-bottom: 80px;
+}
+
+/* Hero / Bảng điều khiển */
+.admin-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 32px 36px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(120deg, #edf7f1 0%, #f7f9f3 55%, #fff5e8 100%);
+    box-shadow: 0 4px 20px rgba(35, 52, 43, 0.05);
+}
+
+.admin-hero__text .eyebrow {
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.admin-hero__title {
+    margin: 0 0 8px;
+    font-family: "Literata", Georgia, serif;
+    font-size: 2.2rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.admin-hero__desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.98rem;
+    max-width: 65ch;
+    line-height: 1.6;
+}
+
+.admin-hero__actions {
+    flex-shrink: 0;
+}
+
+.admin-hero__cta {
+    padding: 13px 22px;
+    font-size: 0.98rem;
+    box-shadow: 0 6px 18px rgba(238, 101, 72, 0.35);
+}
+
+/* Thẻ chung Admin Card */
+.admin-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: 0 6px 24px rgba(35, 52, 43, 0.05);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--line);
+    background: #f9faf7;
+}
+
+.admin-card__title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-card__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.admin-card__count {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--panel-soft);
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--line);
+}
+
+.admin-card__body {
+    padding: 24px 28px;
+}
+
+/* Badges */
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.admin-badge--warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.admin-badge--info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.admin-badge--success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+/* Grid KPI Thống kê */
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.admin-kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: #fcfdfa;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(35, 52, 43, 0.06);
+}
+
+.admin-kpi-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--panel-soft);
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.admin-kpi-card--revenue .admin-kpi-icon {
+    background: #e6f7ee;
+}
+
+.admin-kpi-card--sales .admin-kpi-icon {
+    background: #eff6ff;
+}
+
+.admin-kpi-card--top .admin-kpi-icon {
+    background: #fff7ed;
+}
+
+.admin-kpi-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.admin-kpi-label {
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.admin-kpi-value {
+    font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.admin-kpi-card--revenue .admin-kpi-value {
+    color: var(--success);
+}
+
+.admin-subheading {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.admin-rank-pill {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--panel-soft);
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.admin-rank-pill.is-first {
+    background: #fef08a;
+    color: #854d0e;
+}
+
+.admin-sales-count {
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* Đơn chờ thanh toán */
+.payment-code {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #f0f3ed;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.admin-user-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-user-cell small {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.admin-amount {
+    color: var(--success);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.admin-action-btn {
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    white-space: nowrap;
+}
+
+/* Kho truyện Admin */
+.admin-story-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-story-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fcfdfa;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-story-row:hover {
+    background: var(--panel-soft);
+    border-color: #cbdad0;
+    transform: translateX(3px);
+}
+
+.admin-story-media {
+    flex-shrink: 0;
+}
+
+.admin-story-thumb {
+    width: 48px;
+    height: 64px;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    display: block;
+}
+
+.admin-story-thumb--empty {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 64px;
+    border-radius: 6px;
+    background: #e2e8df;
+    font-size: 1.5rem;
+}
+
+.admin-story-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-story-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-story-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.admin-story-author {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.story-status-pill {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.story-status-pill.is-full {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.story-status-pill.is-ongoing {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.admin-story-price {
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.admin-story-price.is-free {
+    color: var(--success);
+}
+
+.admin-story-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.admin-story-actions .button {
+    padding: 8px 14px;
+    font-size: 0.86rem;
+}
+
+/* Empty state */
+.admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 42px 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.admin-empty--small {
+    padding: 24px;
+}
+
+.admin-empty__icon {
+    font-size: 2.2rem;
+}
+
+.admin-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   RANKING PAGE — Bảng xếp hạng tinh tế, nổi bật Top 3
+   ===================================================== */
+
+.ranking-page {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-bottom: 80px;
+}
+
+/* Intro Header */
+.ranking-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 30px 36px;
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--success);
+    border-radius: 20px;
+    background: linear-gradient(110deg, #eaf6ef 0%, #f6f9f2 60%, #fff4e5 100%);
+    box-shadow: 0 4px 20px rgba(35, 52, 43, 0.05);
+}
+
+.ranking-intro__text h1 {
+    margin: 4px 0 8px;
+    font-family: "Literata", Georgia, serif;
+    font-size: 2.2rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.ranking-intro__text p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.98rem;
+    max-width: 65ch;
+    line-height: 1.6;
+}
+
+.ranking-refresh-btn {
+    padding: 12px 20px;
+    font-size: 0.92rem;
+    flex-shrink: 0;
+}
+
+/* Columns */
+.ranking-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.ranking-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: 0 6px 24px rgba(35, 52, 43, 0.05);
+    overflow: hidden;
+}
+
+.ranking-column-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 26px;
+    border-bottom: 1px solid var(--line);
+    background: #f9faf7;
+}
+
+.ranking-column-icon {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: var(--panel-soft);
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.ranking-column-title-group {
+    flex: 1;
+    min-width: 0;
+}
+
+.ranking-eyebrow {
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    color: var(--success);
+    font-weight: 800;
+}
+
+.ranking-column-header h2 {
+    margin: 3px 0 4px;
+    font-family: "Literata", Georgia, serif;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+}
+
+.ranking-column-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+/* Ranking Items */
+.ranking-list {
+    margin: 0;
+    padding: 16px 20px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ranking-item {
+    display: grid;
+    grid-template-columns: 44px 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ranking-item:hover {
+    background: var(--panel-soft);
+    border-color: #cbdad0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(35, 52, 43, 0.06);
+}
+
+/* Vị trí thứ hạng */
+.ranking-position-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+}
+
+.ranking-position {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--panel-soft);
+    color: var(--muted);
+    font-family: "Literata", Georgia, serif;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.ranking-crown {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    font-size: 0.95rem;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+/* Màu thứ hạng đặc biệt Top 1, 2, 3 */
+.ranking-position-1 {
+    background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%);
+    color: #78350f;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.ranking-position-2 {
+    background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(148, 163, 184, 0.35);
+}
+
+.ranking-position-3 {
+    background: linear-gradient(135deg, #ffedd5 0%, #ea580c 100%);
+    color: #7c2d12;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
+}
+
+/* Thẻ Top 1 viền nổi bật */
+.ranking-item--top-1 {
+    background: linear-gradient(90deg, rgba(254, 240, 138, 0.15) 0%, transparent 100%);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+/* Bìa truyện */
+.ranking-cover-wrap {
+    width: 56px;
+    height: 74px;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+    flex-shrink: 0;
+}
+
+.ranking-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ranking-cover-empty {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: #e5ece6;
+    font-size: 1.6rem;
+}
+
+.ranking-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.ranking-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.35;
+}
+
+.ranking-author {
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.ranking-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.ranking-metric-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+}
+
+.ranking-metric-unit {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.ranking-revenue {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #eaf8f0;
+    color: var(--success);
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+/* Empty & Loading */
+.ranking-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.ranking-empty-icon {
+    font-size: 2.4rem;
+}
+
+.ranking-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.ranking-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.ranking-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--line);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: ranking-spin 0.8s linear infinite;
+}
+
+@keyframes ranking-spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* =====================================================
+   DARK MODE — Tương thích tuyệt đối cho Admin & BXH
+   ===================================================== */
+
+[data-theme="dark"] .admin-hero {
+    background: linear-gradient(120deg, #1b2821 0%, #1c2420 55%, #2a201a 100%);
+    border-color: var(--line);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .admin-card {
+    background: var(--panel);
+    border-color: var(--line);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .admin-card__header {
+    background: #19221d;
+    border-color: var(--line);
+}
+
+[data-theme="dark"] .admin-card__count {
+    background: #25332a;
+    border-color: var(--line);
+    color: var(--text);
+}
+
+[data-theme="dark"] .admin-kpi-card {
+    background: #1d2722;
+    border-color: var(--line);
+}
+
+[data-theme="dark"] .admin-kpi-card:hover {
+    background: #23302a;
+}
+
+[data-theme="dark"] .admin-kpi-card--revenue .admin-kpi-icon {
+    background: #1b3829;
+}
+
+[data-theme="dark"] .admin-kpi-card--sales .admin-kpi-icon {
+    background: #192d42;
+}
+
+[data-theme="dark"] .admin-kpi-card--top .admin-kpi-icon {
+    background: #3b281b;
+}
+
+[data-theme="dark"] .admin-rank-pill {
+    background: #27372e;
+    color: var(--text);
+}
+
+[data-theme="dark"] .admin-rank-pill.is-first {
+    background: #59452e;
+    color: #fef08a;
+}
+
+[data-theme="dark"] .admin-story-row {
+    background: #1d2722;
+    border-color: var(--line);
+}
+
+[data-theme="dark"] .admin-story-row:hover {
+    background: #24322b;
+    border-color: #3b5043;
+}
+
+[data-theme="dark"] .admin-story-thumb--empty {
+    background: #2a3a30;
+}
+
+[data-theme="dark"] .story-status-pill.is-full {
+    background: #153e26;
+    color: #86efac;
+}
+
+[data-theme="dark"] .story-status-pill.is-ongoing {
+    background: #432414;
+    color: #fdba74;
+}
+
+[data-theme="dark"] .payment-code {
+    background: #25332a;
+    color: #e2e8df;
+}
+
+[data-theme="dark"] .admin-badge--warning {
+    background: #422a07;
+    color: #fef08a;
+    border-color: #714309;
+}
+
+[data-theme="dark"] .admin-badge--info {
+    background: #082f49;
+    color: #7dd3fc;
+    border-color: #0369a1;
+}
+
+[data-theme="dark"] .admin-badge--success {
+    background: #14532d;
+    color: #86efac;
+    border-color: #166534;
+}
+
+/* Dark mode Ranking */
+[data-theme="dark"] .ranking-intro {
+    background: linear-gradient(110deg, #182820 0%, #1e2621 60%, #2a2019 100%);
+    border-color: var(--line);
+    border-left-color: var(--success);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .ranking-column {
+    background: var(--panel);
+    border-color: var(--line);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .ranking-column-header {
+    background: #19221d;
+    border-color: var(--line);
+}
+
+[data-theme="dark"] .ranking-column-icon {
+    background: #24322a;
+}
+
+[data-theme="dark"] .ranking-item:hover {
+    background: #24322b;
+    border-color: #3b5043;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ranking-item--top-1 {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, transparent 100%);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="dark"] .ranking-cover-empty {
+    background: #2a3a30;
+}
+
+[data-theme="dark"] .ranking-position {
+    background: #24322a;
+    color: var(--text);
+}
+
+[data-theme="dark"] .ranking-revenue {
+    background: #173626;
+    color: #86efac;
+}
+
+
+/* =====================================================
+   RESPONSIVE — Admin & Ranking
+   ===================================================== */
+
+@media (max-width: 900px) {
+    .ranking-columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .admin-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 20px;
+    }
+
+    .admin-hero__title {
+        font-size: 1.8rem;
+    }
+
+    .admin-card__header {
+        flex-wrap: wrap;
+        padding: 16px 20px;
+    }
+
+    .admin-card__body {
+        padding: 18px 20px;
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-story-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .admin-story-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .ranking-intro {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 20px;
+    }
+
+    .ranking-intro__text h1 {
+        font-size: 1.8rem;
+    }
+
+    .ranking-refresh-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .ranking-item {
+        grid-template-columns: 36px 48px minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .ranking-metric {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-top: 8px;
+        border-top: 1px dashed var(--line);
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-story-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .admin-story-actions .button {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+        text-align: center;
     }
 }
