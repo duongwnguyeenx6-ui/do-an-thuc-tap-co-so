@@ -168,8 +168,17 @@ img {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line);
+}
+
+.story-section,
+.genre-section,
+#latest,
+#genres {
+    scroll-margin-top: 86px;
 }
 
 .topbar-inner {
