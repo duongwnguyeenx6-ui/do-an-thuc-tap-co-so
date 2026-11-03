@@ -48,14 +48,74 @@ export function createComponent(context) {
   }
 
   function renderAdminSummary() {
-    const summary = state.adminSummary;
+    const summary = state.adminSummary || { totalRevenue: 0, totalSales: 0, topStories: [] };
     const topStories = (summary.topStories || []).slice(0, 5);
     return `
-      <section class="admin-panel" id="ranking"><h3>Doanh thu hệ thống</h3>
-        <div class="stats-grid"><div class="stat-box"><strong>${money(summary.totalRevenue)}đ</strong><span>Tổng doanh thu</span></div><div class="stat-box"><strong>${summary.totalSales || 0}</strong><span>Số giao dịch</span></div><div class="stat-box"><strong>${topStories.length}</strong><span>Truyện bán chạy</span></div></div>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th>Truyện</th><th>Doanh thu</th><th>Bán</th></tr></thead><tbody>
-          ${topStories.length ? topStories.map((story) => `<tr><td>${escapeHtml(story.tieuDe)}</td><td>${money(story.total)}đ</td><td>${story.sales}</td></tr>`).join('') : '<tr><td colspan="3">Chưa có giao dịch nào.</td></tr>'}
-        </tbody></table></div>
+      <section class="admin-card admin-card--stats">
+        <div class="admin-card__header">
+          <div class="admin-card__title-group">
+            <span class="admin-badge admin-badge--success">💰 Tài chính</span>
+            <h3 class="admin-card__title">Thống kê & Doanh thu</h3>
+          </div>
+          <span class="admin-card__count">Thời gian thực</span>
+        </div>
+        <div class="admin-card__body">
+          <div class="admin-stats-grid">
+            <div class="admin-kpi-card admin-kpi-card--revenue">
+              <div class="admin-kpi-icon">💵</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Tổng doanh thu</span>
+                <strong class="admin-kpi-value">${money(summary.totalRevenue)}đ</strong>
+              </div>
+            </div>
+            <div class="admin-kpi-card admin-kpi-card--sales">
+              <div class="admin-kpi-icon">🧾</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Tổng giao dịch</span>
+                <strong class="admin-kpi-value">${summary.totalSales || 0}</strong>
+              </div>
+            </div>
+            <div class="admin-kpi-card admin-kpi-card--top">
+              <div class="admin-kpi-icon">📈</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Truyện có doanh thu</span>
+                <strong class="admin-kpi-value">${topStories.length}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-top-sales-section">
+            <h4 class="admin-subheading">Top truyện tạo doanh thu cao nhất</h4>
+            ${topStories.length ? `
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 52px; text-align: center;">Hạng</th>
+                      <th>Tên truyện</th>
+                      <th>Doanh thu</th>
+                      <th>Lượt bán</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${topStories.map((story, idx) => `
+                      <tr>
+                        <td style="text-align: center;">
+                          <span class="admin-rank-pill ${idx === 0 ? 'is-first' : ''}">${idx + 1}</span>
+                        </td>
+                        <td><strong>${escapeHtml(story.tieuDe)}</strong></td>
+                        <td><span class="admin-amount">${money(story.total)}đ</span></td>
+                        <td><span class="admin-sales-count">${story.sales} lượt</span></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>` : `
+              <div class="admin-empty admin-empty--small">
+                <p>Chưa có giao dịch phát sinh.</p>
+              </div>`}
+          </div>
+        </div>
       </section>`;
   }
 
